@@ -18,7 +18,11 @@ function Library(element, data) {
     _this.$search = $('<input type="text">').addClass('search').attr('placeholder', "Search for Content").appendTo(_this.$root).on('change keyup', function () {
         var search = $(this).val().toLowerCase();
         if (!search) {
+            _this.$list.find('.folder').addClass('open');
             _this.$list.find('.item').show();
+            _this.$list.find('.folder').each(function () {
+                $(this).find('.folder-header').trigger('click');
+            })
         } else {
             _this.$list.find('.item').hide();
             _this.$list.find('.item').each(function () {
@@ -26,7 +30,8 @@ function Library(element, data) {
                 if (!search || ~item.Title.toLowerCase().indexOf(search)) {
                     $(this).show(); // Show this row
                     $(this).find('.item').show(); // Show all the children
-                    $(this).parentsUntil(_this.$list).show(); // Show all the parents
+                    $(this).parentsUntil(_this.$list).addClass("open")
+                    //$(this).parentsUntil(_this.$list).show(); // Show all the parents
                 }
             });
         }
@@ -44,13 +49,23 @@ function Library(element, data) {
 
         _this.library.forEach(function (item) {
             // Create a new item in the list.
-            var $item = $('<div>').addClass('item').attr('id', item.ID).addClass(item.Type).toggleClass('purchasable', !!item.StoreCost).appendTo(_this.$list).click(function () {
-                if (item.Type) {
-                    location.hash += '/' + this.id;
-                }
-            });
+            var isFolder = !item.Type;
+            var $item = $('<div>').addClass('item').attr('id', item.ID).addClass(item.Type).toggleClass('purchasable', !!item.StoreCost).toggleClass('folder', isFolder).appendTo(_this.$list);
 
-            if (item.Type) {
+            if (isFolder) {
+                var $header = $('<div>').addClass('folder-header').appendTo($item);
+                $('<span>').addClass('folder-arrow').html('&#9654;').appendTo($header);
+                $('<span>').addClass('folder-title').html(item.Title || item.ID).appendTo($header);
+                $header.click(function () {
+                    $item.toggleClass('open');
+                    if (!$item.hasClass('open')) {
+                        $item.find('.item').css('display', '');
+                    }
+                });
+            } else {
+                $item.click(function () {
+                    location.hash += '/' + this.id;
+                });
                 var $content = $('<div>').addClass('item-content').appendTo($item);
                 if (item.Thumbnail) {
                     var src = _this.data.evaluateText(item.Thumbnail);
