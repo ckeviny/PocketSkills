@@ -1,7 +1,7 @@
 /// <reference path="azure.js" />
 
 // Client_ID = '4e173ffd-b9ca-470e-a71a-c01023427dc4'
-Client_ID = clientID;
+Client_ID = client_ID;
 
 // Make the local version super speed.
 if (sessionStorage && sessionStorage.debug) {
