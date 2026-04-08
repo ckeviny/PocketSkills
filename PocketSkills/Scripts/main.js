@@ -1,6 +1,7 @@
 /// <reference path="azure.js" />
 
-Client_ID = '4e173ffd-b9ca-470e-a71a-c01023427dc4'
+// Client_ID = '4e173ffd-b9ca-470e-a71a-c01023427dc4'
+Client_ID = process.env.Client_ID;
 
 // Make the local version super speed.
 if (sessionStorage && sessionStorage.debug) {
@@ -110,6 +111,8 @@ $(function main() {
     function msalSignIn() {
         showLoad("Checking Sign-In Status...")
         const account = msalInstance.getActiveAccount()
+
+        console.log(`Active MSAL account:`, account)
 
         if (account) {
             showLoad("Already Signed In")
