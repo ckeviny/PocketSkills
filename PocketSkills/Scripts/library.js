@@ -157,7 +157,7 @@ function Library(element, data) {
                         src = window.server.mediaLocation + src;
                     }
 
-                    var $video = $('<video preload="auto" controls>').addClass('item-content').appendTo($viewer);
+                    var $video = $('<video preload="metadata" controls>').addClass('item-content').appendTo($viewer);
 
                     // Prevent mass numbers of events when seeking etc.
                     var throttleEvents = {};
