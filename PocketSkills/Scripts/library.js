@@ -157,7 +157,7 @@ function Library(element, data) {
                         src = window.server.mediaLocation + src;
                     }
 
-                    var $video = $('<video preload="metadata" controls>').addClass('item-content').appendTo($viewer);
+                    var $video = $('<video autoplay preload="auto" controls>').addClass('item-content').appendTo($viewer);
 
                     // Prevent mass numbers of events when seeking etc.
                     var throttleEvents = {};
@@ -185,12 +185,6 @@ function Library(element, data) {
                         _this.data.set($viewer.id + '_Watched', Date());
                     });
 
-                    $video.one('loadedmetadata', function() {
-                        var s = this.seekable;
-                        log('Seekable ranges: ' + s.length + (s.length ? ' [' + s.start(0) + ',' + s.end(0) + ']' : '') + ' duration:' + this.duration);
-                        var p = this.play();
-                        if (p) p.catch(function() {});
-                    });
                     $video.attr('src', src);
                     break;
 
