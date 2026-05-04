@@ -185,8 +185,11 @@ function Library(element, data) {
                         _this.data.set($viewer.id + '_Watched', Date());
                     });
 
+                    $video.one('loadedmetadata', function() {
+                        var p = this.play();
+                        if (p) p.catch(function() {});
+                    });
                     $video.attr('src', src);
-                    $video[0].play();
                     break;
 
                 case 'audio':
