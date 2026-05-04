@@ -181,8 +181,8 @@ function Library(element, data) {
                         _this.data.set($viewer.id + '_Watched', Date());
                     });
 
-                    $video.one('canplay', function() { this.play(); });
                     $video.attr('src', src);
+                    $video[0].play();
                     break;
 
                 case 'audio':
