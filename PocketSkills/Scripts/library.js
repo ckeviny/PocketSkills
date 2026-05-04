@@ -168,6 +168,10 @@ function Library(element, data) {
                         throttleEvents[ev.type] = Date.now();
                     });
 
+                    $video.on('loadedmetadata', function (ev) {
+                        console.log("Metadata is ready");
+                    });
+
                     $video.on('error', function () {
                         $video.replaceWith(content);
                     });
