@@ -186,6 +186,8 @@ function Library(element, data) {
                     });
 
                     $video.one('loadedmetadata', function() {
+                        var s = this.seekable;
+                        log('Seekable ranges: ' + s.length + (s.length ? ' [' + s.start(0) + ',' + s.end(0) + ']' : '') + ' duration:' + this.duration);
                         var p = this.play();
                         if (p) p.catch(function() {});
                     });
