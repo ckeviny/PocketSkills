@@ -80,7 +80,7 @@ function Library(element, data) {
                 }
                 var $label = $('<div>').addClass('item-label').appendTo($content);
                 if (item.Parent) {
-                    var $ancestry = $('<div>').addClass('item-ancestry').html(ancestry(item)).appendTo($label);
+                    var $ancestry = $('<div>').addClass('item-ancestry').html(ancestry(item, 1)).appendTo($label);
                 }
                 var $title = $('<div>').addClass('item-title').html(item.Title || ("No description for " + item.ID + ")")).appendTo($label);
             }
