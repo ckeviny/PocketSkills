@@ -42,9 +42,13 @@ function Library(element, data) {
     $(_this.library).on('loaded', function () {
         console.log(`Loaded Library`);
 
-        function ancestry(item) {
+        // Bold first level of ancestry
+        function ancestry(item, level) {
             var parent = _this.library.get(item.Parent);
-            return parent ? ancestry(parent) + " " + (parent.Title || parent.ID) : "";
+            if (level > 0) {
+                return parent ? ancestry(parent, level - 1) + " <strong>" + (parent.Title || parent.ID) + "</strong>" : "";
+            }
+            return parent ? ancestry(parent, 0) + " " + (parent.Title || parent.ID) : "";
         }
 
         _this.library.forEach(function (item) {
@@ -166,10 +170,6 @@ function Library(element, data) {
                             log("Video: " + $viewer.id + " (" + ev.target.currentSrc + "): " + ev.type + "@" + ev.target.currentTime + " (" + Math.round(ev.target.currentTime * 100 / ev.target.duration) + "%)");
                         }
                         throttleEvents[ev.type] = Date.now();
-                    });
-
-                    $video.on('loadedmetadata', function (ev) {
-                        console.log("Metadata is ready");
                     });
 
                     $video.on('error', function () {
