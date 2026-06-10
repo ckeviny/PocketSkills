@@ -578,6 +578,15 @@ function Conversation(element, data, module) {
                 });
 
                 $video.attr('src', src);
+                if (line.Subtitles) {
+                    var subtitleSrc = line.Subtitles;
+                    if (!subtitleSrc.startsWith('http')) {
+                        subtitleSrc = window.server.mediaLocation + subtitleSrc;
+                    }
+                    $('<track kind="subtitles" srclang="en" label="English" default>')
+                        .attr('src', subtitleSrc)
+                        .appendTo($video);
+                }
 
                 // Allow them to keep going immediately if they've watched it before.
                 if (_this.data.get($bubble.id + '_Watched')) {

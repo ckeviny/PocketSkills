@@ -186,6 +186,15 @@ function Library(element, data) {
                     });
 
                     $video.attr('src', src);
+                    if (item.Subtitles) {
+                        var subtitleSrc = item.Subtitles;
+                        if (!subtitleSrc.startsWith('http')) {
+                            subtitleSrc = window.server.mediaLocation + subtitleSrc;
+                        }
+                        $('<track kind="subtitles" srclang="en" label="English" default>')
+                            .attr('src', subtitleSrc)
+                            .appendTo($video);
+                    }
                     break;
 
                 case 'audio':
