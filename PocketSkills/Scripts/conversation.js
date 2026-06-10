@@ -541,7 +541,7 @@ function Conversation(element, data, module) {
                     src = window.server.mediaLocation + src;
                 }
 
-                var $video = $('<video preload="auto" controls>').appendTo($bubble);
+                var $video = $('<video preload="auto" controls crossorigin="anonymous">').appendTo($bubble);
 
                 // Prevent mass numbers of events when seeking etc.
                 var throttleEvents = {};
