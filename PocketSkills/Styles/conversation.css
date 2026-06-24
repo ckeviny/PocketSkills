@@ -219,6 +219,11 @@
         pointer-events: none;
     }
 
+    /* But keep videos interactive after submission */
+    .conversation .submitted video {
+        pointer-events: auto;
+    }
+
     /* Or disabled stuff */
     .conversation .disabled {
         pointer-events: none;
