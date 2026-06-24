@@ -68,6 +68,9 @@ $(function main() {
         }
     });
 
+    /**
+     * Check authentication of current session
+     */
     function checkSignIn() {
         showLoad("Checking Signin Status...");
         WL.init({
@@ -108,6 +111,9 @@ $(function main() {
 
     msalSignIn();
 
+    /**
+     * Use MSAL to gather auth tokens
+     */
     function msalSignIn() {
         showLoad("Checking Sign-In Status...")
         const account = msalInstance.getActiveAccount()
@@ -147,6 +153,9 @@ $(function main() {
         })
     }
 
+    /**
+     * Retrieve access tokens for current active account
+     */
     function getAccessTokens() {
         return new Promise((resolve, reject) => {
             const account = msalInstance.getActiveAccount();
@@ -172,6 +181,13 @@ $(function main() {
         })
     }
 
+    /**
+     * Use AJAX to send request to url, using accessToken as auth
+     * @param {string} accessToken  - Access Token
+     * @param {string} url          - URL
+     * @param {callback} next       - Success callback 
+     * @param {callback} err        - Error callback
+     */
     function ajaxRequest(accessToken, url, next, err) {
         $.ajax({
             url,
@@ -197,6 +213,9 @@ $(function main() {
         })
     }
 
+    /**
+     * Use access token to send query to Server.cshtml to retrieve information
+     */
     function startApp() {
         getAccessTokens()
             .then(accessToken => {
