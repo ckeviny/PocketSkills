@@ -568,7 +568,7 @@ function Conversation(element, data, module) {
 
                     _this.data.set($bubble.id, 'Watched');
                     _this.data.set($bubble.id + '_Watched', Date());
-
+                     
                     if (!pointsAwarded) {
                         _this.awardPoints(line);
                         pointsAwarded = true;
