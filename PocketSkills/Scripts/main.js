@@ -176,11 +176,13 @@ $(function main() {
             msalInstance.acquireTokenSilent(tokenRequest)
                 .then(tokenResponse => resolve(tokenResponse.accessToken))
                 .catch(error => {
-                    console.error("Failed to acquire tokens", error);
-                    showLoad("Unable to get access tokens")
-                    msalInstance.logout({
-                        postLogoutRedirectUri: window.location.origin
-                    })
+                    // Safari's cross-site tracking prevention blocks the hidden iframe MSAL
+                    // uses for silent SSO, so this fails on every iOS load. Fall back to an
+                    // interactive (top-level) redirect instead of logging out, otherwise the
+                    // logout just restarts loginRedirect() and creates an infinite loop.
+                    console.error("Silent token acquisition failed, falling back to redirect", error);
+                    showLoad("Renewing sign-in...")
+                    msalInstance.acquireTokenRedirect(tokenRequest)
                 })
         })
     }
