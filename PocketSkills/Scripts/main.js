@@ -112,8 +112,8 @@ $(function main() {
                     } else {
                         showLoad("Not Signed In.")
                         showLoad("Showing Sign-In Screen...")
-                        msalInstance.loginRedirect(loginRequest)
                         $('#mainLoadingScreen').fadeOut('slow')
+                        // Wait for the user to tap Sign In instead of redirecting automatically.
                     }
                 })
                 .catch((error) => {
@@ -122,6 +122,10 @@ $(function main() {
                     $('#mainLoadingScreen').fadeOut('slow')
                 })
         }
+
+        $('#windowsLiveSignIn, #testSignIn').click(() => {
+            msalInstance.loginRedirect(loginRequest)
+        })
 
         $('#windowsLiveSignOut, #invitationSignOut').click(() => {
             msalInstance.logout({
@@ -150,12 +154,13 @@ $(function main() {
                 .then(tokenResponse => resolve(tokenResponse.accessToken))
                 .catch(error => {
                     // Safari's cross-site tracking prevention blocks the hidden iframe MSAL
-                    // uses for silent SSO, so this fails on every iOS load. Fall back to an
-                    // interactive (top-level) redirect instead of logging out, otherwise the
-                    // logout just restarts loginRedirect() and creates an infinite loop.
-                    console.error("Silent token acquisition failed, falling back to redirect", error);
-                    showLoad("Renewing sign-in...")
-                    msalInstance.acquireTokenRedirect(tokenRequest)
+                    // uses for silent SSO, so this fails on every iOS load. Show the sign-in
+                    // screen and let the user tap Sign In to renew, instead of redirecting
+                    // automatically, which caused an infinite loop.
+                    console.error("Silent token acquisition failed", error);
+                    showLoad("Please sign in again.")
+                    $('#mainLoginBlocker').show()
+                    reject(error)
                 })
         })
     }
