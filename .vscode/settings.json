@@ -1,0 +1,11 @@
+{
+    "[razor]": {
+        "editor.formatOnSave": false
+    },
+    "[aspnetcorerazor]": {
+        "editor.formatOnSave": false
+    },
+    "[html]": {
+        "editor.formatOnSave": false
+    }
+}
