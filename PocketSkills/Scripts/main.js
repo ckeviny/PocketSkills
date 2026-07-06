@@ -100,6 +100,10 @@ $(function main() {
             clientId: Client_ID,
             authority: `https://login.microsoftonline.com/common`,
             redirectUri: 'https://' + window.location.hostname
+        },
+        cache: {
+            cacheLocation: 'localStorage',
+            storeAuthStateInCookie: true
         }
     }
 
