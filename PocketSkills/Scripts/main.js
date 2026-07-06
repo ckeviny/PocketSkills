@@ -68,33 +68,6 @@ $(function main() {
         }
     });
 
-    /**
-     * Check authentication of current session
-     */
-    // function checkSignIn() {
-    //     showLoad("Checking Signin Status...");
-    //     WL.init({
-    //         client_id: Client_ID,
-    //         redirect_uri: 'https://' + window.location.hostname + '/wlcallback.html',
-    //     });
-    //     WL.getLoginStatus(function (status, session) {
-    //         if (status.status == 'connected') {
-    //             showLoad("Already Signed In.");
-    //             $('#mainLoginBlocker').hide();
-    //             startApp();
-    //         } else {
-    //             showLoad("Not Signed In.");
-    //             showLoad("Showing Sign-In Screen...");
-    //             $('#mainLoadingScreen').fadeOut('slow');
-    //         }
-    //     }, true);
-    //     $('#windowsLiveSignOut, #invitationSignOut').click(function () {
-    //         WL.logout(function () {
-    //             location.href = location.origin;
-    //         });
-    //     })
-    // }
-
     const msalConfig = {
         auth: {
             clientId: Client_ID,
