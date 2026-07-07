@@ -155,6 +155,7 @@ $(function main() {
                     .catch((error) => {
                         console.error("Popup sign-in failed:", error)
                         showLoad("Sign-in failed. Please try again.")
+                        $('#mainLoginError').text("Sign-in failed: " + (error.errorMessage || error.message || error))
                     })
             } else {
                 msalInstance.loginRedirect(loginRequest)
@@ -193,6 +194,7 @@ $(function main() {
                     // automatically, which caused an infinite loop.
                     console.error("Silent token acquisition failed", error);
                     showLoad("Please sign in again.")
+                    $('#mainLoginError').text("Token renewal failed: " + (error.errorMessage || error.message || error))
                     $('#mainLoginBlocker').show()
                     reject(error)
                 })
