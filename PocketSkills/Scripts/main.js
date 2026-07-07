@@ -30,6 +30,23 @@ window.log = function (message) {
     window.logTable && azure.writeMessage(window.logTable, window.server ? window.server.userID : '.', message);
 };
 
+function isIOS() {
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+        return true;
+    }
+    // iPadOS 13+ reports as "MacIntel" in desktop mode; touch support disambiguates it from a real Mac.
+    return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+}
+
+function isSafari() {
+    var ua = navigator.userAgent;
+    return /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+}
+
+function isIOSSafari() {
+    return isIOS() && isSafari();
+}
+
 $(function main() {
     'use strict';
     debugger;
@@ -124,7 +141,24 @@ $(function main() {
         }
 
         $('#windowsLiveSignIn, #testSignIn').click(() => {
-            msalInstance.loginRedirect(loginRequest)
+            if (isIOSSafari()) {
+                // Safari's ITP blocks the storage state a top-level redirect relies on,
+                // causing an infinite sign-in loop on iOS. A popup avoids the redirect
+                // round-trip entirely, so it isn't affected.
+                msalInstance.loginPopup(loginRequest)
+                    .then((response) => {
+                        msalInstance.setActiveAccount(response.account)
+                        showLoad("Already Signed In.")
+                        $('#mainLoginBlocker').hide()
+                        startApp();
+                    })
+                    .catch((error) => {
+                        console.error("Popup sign-in failed:", error)
+                        showLoad("Sign-in failed. Please try again.")
+                    })
+            } else {
+                msalInstance.loginRedirect(loginRequest)
+            }
         })
 
         $('#windowsLiveSignOut, #invitationSignOut').click(() => {
