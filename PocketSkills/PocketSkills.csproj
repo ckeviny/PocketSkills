@@ -195,6 +195,7 @@
     <Content Include="Icons\eChuck_Normal_BW.png" />
     <Content Include="Icons\EditNote_Icon.png" />
     <Content Include="Icons\Edit_Icon.png" />
+    <Content Include="Icons\Email_Icon.png" />
     <Content Include="Icons\eLuna_Expanded.png" />
     <Content Include="Icons\eLuna_Normal.png" />
     <Content Include="Icons\eLuna_Normal_BW.png" />
