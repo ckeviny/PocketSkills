@@ -181,7 +181,6 @@ function Library(element, data) {
                     $video.on('ended', function (ev) {
                         log("Elapsed: " + $viewer.id + " ('" + content + "'): " + (Date.now() - started) + "ms");
 
-                        _this.data.set($viewer.id, 'Watched');
                         _this.data.set($viewer.id + '_Watched', Date());
                     });
 
@@ -223,7 +222,6 @@ function Library(element, data) {
                     $audio.on('ended', function (ev) {
                         log("Elapsed: " + $viewer.id + " ('" + content + "'): " + (Date.now() - started) + "ms");
 
-                        _this.data.set($viewer.id, 'Listened');
                         _this.data.set($viewer.id + '_Listened', Date());
                     });
 

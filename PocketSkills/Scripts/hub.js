@@ -376,7 +376,7 @@ function Hub(element, data) {
         return !module.AvailableCondition || _this.data.evaluateExpression(module.AvailableCondition);
     }
 
-    _this.isSatisfied = function (module) {
+    _this.isSatisfied = function (module) {``
         return !module.SatisfiedCondition || _this.data.evaluateExpression(module.SatisfiedCondition);
     }
 
