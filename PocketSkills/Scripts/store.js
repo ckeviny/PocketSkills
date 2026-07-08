@@ -184,6 +184,7 @@ function Store(element, data) {
                 $('#mainFooter').removeClass('showSparkles');
                 $('#mainFooter').addClass('showDisabledSparkles');
                 alert("Purchase Successful");
+                location.replace(location.href.replace('Store', 'Library'));
             } else {
                 alert("Sorry, you don't have enough to purchase this item yet.");
             }
