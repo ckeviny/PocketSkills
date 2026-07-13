@@ -259,7 +259,7 @@ function Agent(element, data) {
         }
     });
 
-    $(_this.data).on('loaded', function () {
+    $(_this.data).on('loaded change', function () {
         _this.update();
     });
 }

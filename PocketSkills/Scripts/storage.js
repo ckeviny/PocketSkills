@@ -141,22 +141,39 @@ function Data() {
     _this.get = function (id) {
         var value = _this.cache[id];
         if (Data.logToConsole) {
-            console.log("Getting variable '" + id + "': '" + value + "'.");
+            console.log(`Getting variable '${id}': '${value}'.`);
         }
         return value; // TODO: Do something if we are still waiting for Azure.
     }
 
     _this.set = function (id, value) {
         if (Data.logToConsole) {
-            console.log("Setting variable '" + id + "' to '" + value + "'.");
+            console.log(`Setting variable '${id}' to '${value}'.`);
         }
 
-        var timestamp = Date.now();
-        _this.cache[id] = value;
-        _this.cacheTimes[id] = timestamp;
-        _this.setAzure(id, value, timestamp);
-
-        $(_this).triggerHandler('change', id);
+        try {
+            var old_value = _this.get(id);
+            if (old_value != null) {
+                if (Data.logToConsole) {
+                    console.log(`Overwriting variable '${id}' to '${value}' (was: '${old_value}')`);
+                }
+                var timestamp = Date.now();
+                _this.updateAzure(id, value, timestamp);
+                
+                $(_this).triggerHandler('change', id);
+            } else {
+                if (Data.logToConsole) {
+                    console.log(`Variable '${id}' not found. Creating with value '${value}'`);
+                }
+                var timestamp = Date.now();
+                _this.setAzure(id, value, timestamp);
+                
+                $(_this).triggerHandler('change', id);
+            }
+            
+        } catch (e) {
+            console.error(`Error setting variable '${id}' to '${value}': ${e}`);
+        }
     }
 
     _this.clear = function (id) {
@@ -164,7 +181,7 @@ function Data() {
         var value = _this.cache[id];
         if (value != null) {
             if (Data.logToConsole) {
-                console.log("Clearing variable '" + id + "'.  (Was: '" + value + "')");
+                console.log(`Clearing variable '${id}'.  (Was: '${value}')`);
             }
 
             // TODO: Decide whether this should just clear the local memory's value for the variable,
@@ -191,6 +208,19 @@ function Data() {
                 ClientTimestamp: timestamp
             };
             azure.writeData(_this.table, _this.user, data);
+        }
+    }
+
+    _this.updateAzure = function (id, value, timestamp) {
+        timestamp = timestamp || Date.now();
+        if (_this.table) {
+            var data = {
+                ID: id,
+                Value: value,
+                ClientTime: Date(),
+                ClientTimestamp: timestamp
+            };
+            azure.updateData(_this.table, _this.user, data);
         }
     }
 

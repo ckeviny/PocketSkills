@@ -66,7 +66,18 @@ function Calendar(element, data) {
             }
             $(_this).triggerHandler('loaded');
             _this.update();
+            updateDueToday();
         });
+    }
+
+    // Recomputes how many of today's activities are still undone, and publishes it to Data
+    // so that AvailableCondition/ShowCondition expressions elsewhere (including the Agent) can react to it.
+    function updateDueToday() {
+        var today = Date.parse(new Date().toDateString());
+        var due = _this.activities.filter(function (a) {
+            return Date.parse(a.Date) == today && !a.Done;
+        }).length;
+        _this.data.set('ActivitiesDueToday', due);
     }
 
     $(element).on('showing', function () {
@@ -106,6 +117,7 @@ function Calendar(element, data) {
                     }
                     delete activity.RowKey;
                     _this.table.add(activity, _this.update);
+                    updateDueToday();
                 });
             });
         } else {
