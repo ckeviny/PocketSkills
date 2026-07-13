@@ -153,24 +153,23 @@ function Data() {
 
         try {
             var old_value = _this.get(id);
+            var timestamp = Date.now();
             if (old_value != null) {
                 if (Data.logToConsole) {
                     console.log(`Overwriting variable '${id}' to '${value}' (was: '${old_value}')`);
                 }
-                var timestamp = Date.now();
                 _this.updateAzure(id, value, timestamp);
-                
-                $(_this).triggerHandler('change', id);
             } else {
                 if (Data.logToConsole) {
                     console.log(`Variable '${id}' not found. Creating with value '${value}'`);
                 }
-                var timestamp = Date.now();
                 _this.setAzure(id, value, timestamp);
-                
-                $(_this).triggerHandler('change', id);
             }
-            
+
+            _this.cache[id] = value;
+            _this.cacheTimes[id] = timestamp;
+
+            $(_this).triggerHandler('change', id);
         } catch (e) {
             console.error(`Error setting variable '${id}' to '${value}': ${e}`);
         }
