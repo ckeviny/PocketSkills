@@ -277,5 +277,5 @@ azure = {
         });
 
         return request;
-    }
+    },
 };

@@ -66,18 +66,37 @@ function Calendar(element, data) {
             }
             $(_this).triggerHandler('loaded');
             _this.update();
-            updateDueToday();
+            updateUpcomingTasks();
         });
     }
 
-    // Recomputes how many of today's activities are still undone, and publishes it to Data
-    // so that AvailableCondition/ShowCondition expressions elsewhere (including the Agent) can react to it.
-    function updateDueToday() {
+    // Publishes the content of the next undone task due today, in 2 days, and in 7 days to Data
+    // (as TaskDueToday / TaskDueIn2Days / TaskDueIn7Days), so AgentSays lines can key ShowCondition
+    // off of them and interpolate the task's own text into their Content.
+    function updateUpcomingTasks() {
+        var oneDay = 24 * 60 * 60 * 1000;
         var today = Date.parse(new Date().toDateString());
-        var due = _this.activities.filter(function (a) {
-            return Date.parse(a.Date) == today && !a.Done;
-        }).length;
-        _this.data.set('ActivitiesDueToday', due);
+
+        function taskDueIn(daysFromToday) {
+            var target = today + daysFromToday * oneDay;
+            var matches = _this.activities.filter(function (a) {
+                return !a.Done && Date.parse(a.Date) == target;
+            });
+            return Object.values(matches).map(function (a) {
+                // Content is authored as "task: description"; split on the first colon and rebuild that same '{task}: {description}' shape.
+                var colonIndex = a.Content.indexOf(':');
+                if (colonIndex == -1) {
+                    return a.Content.trim();
+                }
+                var task = a.Content.slice(0, colonIndex).trim();
+                var description = a.Content.slice(colonIndex + 1).trim();
+                return description ? task + ': ' + description : task;
+            }).join(', ');
+        }
+
+        _this.data.set('TaskDueToday', taskDueIn(0));
+        _this.data.set('TaskDueIn2Days', taskDueIn(2));
+        _this.data.set('TaskDueIn7Days', taskDueIn(7));
     }
 
     $(element).on('showing', function () {
@@ -117,7 +136,7 @@ function Calendar(element, data) {
                     }
                     delete activity.RowKey;
                     _this.table.add(activity, _this.update);
-                    updateDueToday();
+                    updateUpcomingTasks();
                 });
             });
         } else {
