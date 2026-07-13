@@ -220,7 +220,7 @@ function Data() {
                 ClientTime: Date(),
                 ClientTimestamp: timestamp
             };
-            azure.updateData(_this.table, _this.user, data);
+            azure.writeData(_this.table, _this.user, data);
         }
     }
 
