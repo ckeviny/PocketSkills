@@ -83,14 +83,9 @@ function Calendar(element, data) {
                 return !a.Done && Date.parse(a.Date) == target;
             });
             return Object.values(matches).map(function (a) {
-                // Content is authored as "task: description"; split on the first colon and rebuild that same '{task}: {description}' shape.
+                // Content is authored as "task: description"; only the task name is spoken by the agent.
                 var colonIndex = a.Content.indexOf(':');
-                if (colonIndex == -1) {
-                    return a.Content.trim();
-                }
-                var task = a.Content.slice(0, colonIndex).trim();
-                var description = a.Content.slice(colonIndex + 1).trim();
-                return description ? task + ': ' + description : task;
+                return colonIndex == -1 ? a.Content.trim() : a.Content.slice(0, colonIndex).trim();
             }).join(', ');
         }
 
