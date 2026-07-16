@@ -160,6 +160,7 @@ $(function main() {
                     console.error("Silent token acquisition failed", error);
                     showLoad("Please sign in again.")
                     $('#mainLoginError').text("Token renewal failed: " + (error.errorMessage || error.message || error))
+                    $('#mainLoadingScreen').fadeOut('slow')
                     $('#mainLoginBlocker').show()
                     reject(error)
                 })
