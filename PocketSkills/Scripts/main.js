@@ -108,7 +108,7 @@ $(function main() {
                         msalInstance.setActiveAccount(response.account)
                         showLoad("Already Signed In.")
                         $('#mainLoginBlocker').hide()
-                        startApp();
+                        startApp(response.accessToken);
                     } else {
                         showLoad("Not Signed In.")
                         showLoad("Showing Sign-In Screen...")
@@ -202,8 +202,8 @@ $(function main() {
     /**
      * Use access token to send query to Server.cshtml to retrieve information
      */
-    function startApp() {
-        getAccessTokens()
+    function startApp(accessToken) {
+        (accessToken ? Promise.resolve(accessToken) : getAccessTokens())
             .then(accessToken => {
                 var query = location.href.split('?')[1] || '';
                 var requestUrl = 'Server.cshtml?' + query;
