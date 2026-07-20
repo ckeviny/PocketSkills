@@ -226,6 +226,12 @@ button {
                 margin-right: 12px;
             }
 
+            @media (max-width: 480px) {
+                .screen .contact-middle {
+                    font-size: 14px;
+                }
+            }
+
 #mainAgent {
     display: none; /* She is only shown when she has something to say. */
     position: relative;
