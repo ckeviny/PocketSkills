@@ -93,35 +93,36 @@ $(function main() {
      */
     function msalSignIn() {
         showLoad("Checking Sign-In Status...")
-        const account = msalInstance.getActiveAccount()
 
-        console.log(`Active MSAL account:`, account)
+        // handleRedirectPromise must run on every load (not just when there's no
+        // cached account) or a fresh loginRedirect() response never gets processed
+        // once an account is already active from a previous session - causing
+        // acquireTokenSilent to keep failing with no_tokens_found after re-login.
+        msalInstance.handleRedirectPromise()
+            .then((response) => {
+                if (response) {
+                    msalInstance.setActiveAccount(response.account)
+                }
 
-        if (account) {
-            showLoad("Already Signed In")
-            $('#mainLoginBlocker').hide()
-            startApp();
-        } else {
-            msalInstance.handleRedirectPromise()
-                .then((response) => {
-                    if (response) {
-                        msalInstance.setActiveAccount(response.account)
-                        showLoad("Already Signed In.")
-                        $('#mainLoginBlocker').hide()
-                        startApp();
-                    } else {
-                        showLoad("Not Signed In.")
-                        showLoad("Showing Sign-In Screen...")
-                        $('#mainLoadingScreen').fadeOut('slow')
-                        // Wait for the user to tap Sign In instead of redirecting automatically.
-                    }
-                })
-                .catch((error) => {
-                    console.error("Silent sign-in failed:", error)
+                const account = msalInstance.getActiveAccount()
+                console.log(`Active MSAL account:`, account)
+
+                if (account) {
+                    showLoad("Already Signed In")
+                    $('#mainLoginBlocker').hide()
+                    startApp();
+                } else {
                     showLoad("Not Signed In.")
+                    showLoad("Showing Sign-In Screen...")
                     $('#mainLoadingScreen').fadeOut('slow')
-                })
-        }
+                    // Wait for the user to tap Sign In instead of redirecting automatically.
+                }
+            })
+            .catch((error) => {
+                console.error("Silent sign-in failed:", error)
+                showLoad("Not Signed In.")
+                $('#mainLoadingScreen').fadeOut('slow')
+            })
 
         $('#windowsLiveSignIn, #testSignIn').click(() => {
             msalInstance.loginRedirect(loginRequest)
