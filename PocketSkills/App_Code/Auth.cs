@@ -11,7 +11,7 @@ public static class Auth
     /// Builds the exact redirect URI registered in the Azure AD app registration for this host.
     /// Must be identical between the AuthLogin request and the AuthCallback token exchange.
     /// </summary>
-    public static string GetRedirectUri(HttpRequest request)
+    public static string GetRedirectUri(HttpRequestBase request)
     {
         var scheme = request.Url.Host == "localhost" ? "http" : "https";
         return scheme + "://" + request.Url.Authority + "/AuthCallback.cshtml";
@@ -22,7 +22,7 @@ public static class Auth
     /// silent token refresh. Reuses the same app registration/secret as the Key Vault
     /// service principal in Azure.cs.
     /// </summary>
-    public static IConfidentialClientApplication BuildApp(HttpRequest request)
+    public static IConfidentialClientApplication BuildApp(HttpRequestBase request)
     {
         return ConfidentialClientApplicationBuilder
             .Create(Environment.GetEnvironmentVariable("Client_ID"))
