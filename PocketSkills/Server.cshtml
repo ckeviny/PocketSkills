@@ -4,6 +4,7 @@
 @using System.Net.Http
 @using System.Net.Http.Headers
 @using Newtonsoft.Json.Linq
+@using Microsoft.Identity.Client
 
 @{
     try
@@ -11,6 +12,8 @@
         // Get their User Name and ID from Windows Live.
         if (GetDataFromMicrosoftGraph())
         {
+            Authenticated = true;
+
             // Verify they're signing up with a valid invitation code.
             var invitationCode = Request.QueryString["i"];
             var isNew = false;
@@ -41,6 +44,7 @@
         }
         else if (Request.Url.Host == "localhost")
         {
+            Authenticated = true;
             UserID = "localhost";
             UserName = "localhost";
             @LetIn();
@@ -60,27 +64,59 @@
 {
     public string UserID;
     public string UserName;
+    public bool Authenticated;
 
     public bool GetDataFromMicrosoftGraph()
     {
-        string authHeader, accessToken;
-        if (Request.Cookies["authToken"] == null){
-            authHeader = Request.Headers["Authorization"];
-            if (authHeader == null || (!authHeader.StartsWith("Bearer ")))
-            {
-                return false;
-            }
-            accessToken = authHeader.Substring("Bearer ".Length);
-        }
-        else
+        var sessionCookie = Request.Cookies["authToken"];
+        if (sessionCookie == null || String.IsNullOrEmpty(sessionCookie.Value))
         {
-            accessToken = Request.Cookies["authToken"].Value;
-            authHeader = "Bearer " + accessToken;
+            return false;
         }
+
+        var sessionId = sessionCookie.Value;
+        var session = Azure.Get("sessions", sessionId, "session");
+        if (session == null)
+        {
+            return false;
+        }
+
+        // Rehydrate MSAL's cache (holds the refresh token internally) and let
+        // AcquireTokenSilent renew the access token server-side as needed -
+        // this replaces the client-side acquireTokenSilent() call that Safari's
+        // ITP used to block via the hidden iframe.
+        var app = Auth.BuildApp(Request);
+        var cacheBlob = Convert.FromBase64String(session.Properties["TokenCache"].StringValue);
+        ((ITokenCacheSerializer)app.UserTokenCache).DeserializeMsalV3(cacheBlob);
+
+        var homeAccountId = session.Properties["HomeAccountId"].StringValue;
+        var account = app.GetAccountAsync(homeAccountId).Result;
+        if (account == null)
+        {
+            return false;
+        }
+
+        AuthenticationResult result;
+        try
+        {
+            result = app.AcquireTokenSilent(Auth.Scopes, account).ExecuteAsync().Result;
+        }
+        catch (Exception)
+        {
+            // Refresh token expired or was revoked - the session is no longer usable.
+            return false;
+        }
+
+        // The access token may have just been refreshed - persist the updated cache.
+        Azure.Set("sessions", sessionId, "session", new
+        {
+            TokenCache = Convert.ToBase64String(((ITokenCacheSerializer)app.UserTokenCache).SerializeMsalV3()),
+            HomeAccountId = homeAccountId
+        });
 
         using (var client = new HttpClient())
         {
-            client.DefaultRequestHeaders.Add("Authorization", authHeader);
+            client.DefaultRequestHeaders.Add("Authorization", "Bearer " + result.AccessToken);
             var response = client.GetAsync("https://graph.microsoft.com/v1.0/me").Result;
             var json = response.Content.ReadAsStringAsync().Result;
 
@@ -188,6 +224,7 @@
     @Html.Raw(Json.Encode(new
     {
         error = error,
+        authenticated = Authenticated,
         userID = UserID,
         userName = UserName,
         mediaLocation = Environment.GetEnvironmentVariable("MediaLocation") + "/",

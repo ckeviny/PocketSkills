@@ -1,0 +1,14 @@
+@using System
+@using System.Web
+
+@{
+    var sessionCookie = Request.Cookies["authToken"];
+    if (sessionCookie != null && !String.IsNullOrEmpty(sessionCookie.Value))
+    {
+        Azure.Delete("sessions", sessionCookie.Value, "session");
+    }
+
+    Response.Cookies.Add(new HttpCookie("authToken", "") { Expires = DateTime.UtcNow.AddDays(-1), Path = "/" });
+
+    Response.Redirect("/");
+}

@@ -162,6 +162,26 @@ public static class Azure
     }
 
     /// <summary>
+    /// A convenience method to delete a single entity from an Azure table, if it exists.
+    /// </summary>
+    /// <param name="table">The name of the table containing the entity.</param>
+    /// <param name="partitionKey">The partition key of the entity.</param>
+    /// <param name="rowKey">The row key of the entity.</param>
+    public static void Delete(string table, string partitionKey, string rowKey)
+    {
+        var existing = Get(table, partitionKey, rowKey);
+        if (existing == null)
+        {
+            return;
+        }
+
+        var storage = CloudStorageAccount.Parse(StorageConnectionString);
+        var client = storage.CreateCloudTableClient();
+        var reference = client.GetTableReference(table);
+        reference.Execute(TableOperation.Delete(existing));
+    }
+
+    /// <summary>
     /// Gets a SAS URL that gives a user access to rows in a table for only that user.
     /// </summary>
     /// <param name="user">The user ID.</param>

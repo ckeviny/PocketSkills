@@ -1,0 +1,30 @@
+@using System
+@using System.Collections.Generic
+@using System.Web
+
+@{
+    var app = Auth.BuildApp(Request);
+
+    // Bind this request to the browser via a short-lived nonce cookie, and echo
+    // it back through OAuth's state parameter so AuthCallback can confirm the
+    // response actually belongs to this browser (CSRF protection on the code
+    // exchange). The rest of state carries the original query string (e.g. an
+    // invitation code) since a full-page redirect to Microsoft loses it otherwise.
+    var nonce = Guid.NewGuid().ToString("N");
+    var returnQuery = Request.Url.Query;
+    var state = nonce + "|" + (returnQuery.Length > 1 ? returnQuery.Substring(1) : "");
+
+    Response.Cookies.Add(new HttpCookie("authNonce", nonce)
+    {
+        HttpOnly = true,
+        Secure = true,
+        Path = "/",
+        Expires = DateTime.UtcNow.AddMinutes(10)
+    });
+
+    var authUrl = app.GetAuthorizationRequestUrl(Auth.Scopes)
+        .WithExtraQueryParameters(new Dictionary<string, string> { { "state", state } })
+        .ExecuteAsync().Result;
+
+    Response.Redirect(authUrl.ToString());
+}

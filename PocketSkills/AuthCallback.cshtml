@@ -1,0 +1,54 @@
+@using System
+@using System.Web
+@using Microsoft.Identity.Client
+
+@{
+    var error = Request.QueryString["error"];
+    if (!String.IsNullOrEmpty(error))
+    {
+        Response.Redirect("/?authError=" + HttpUtility.UrlEncode(Request.QueryString["error_description"] ?? error));
+        return;
+    }
+
+    var code = Request.QueryString["code"];
+    var state = Request.QueryString["state"] ?? "";
+    var separatorIndex = state.IndexOf('|');
+    var nonce = separatorIndex >= 0 ? state.Substring(0, separatorIndex) : state;
+    var returnQuery = separatorIndex >= 0 ? state.Substring(separatorIndex + 1) : "";
+
+    var nonceCookie = Request.Cookies["authNonce"];
+    var expectedNonce = nonceCookie != null ? nonceCookie.Value : null;
+
+    // Consume the nonce immediately so it can never be replayed.
+    Response.Cookies.Add(new HttpCookie("authNonce", "") { Expires = DateTime.UtcNow.AddDays(-1), Path = "/" });
+
+    if (String.IsNullOrEmpty(code) || String.IsNullOrEmpty(expectedNonce) || nonce != expectedNonce)
+    {
+        Response.Redirect("/?authError=" + HttpUtility.UrlEncode("Sign-in failed. Please try again."));
+        return;
+    }
+
+    var app = Auth.BuildApp(Request);
+    var result = app.AcquireTokenByAuthorizationCode(Auth.Scopes, code).ExecuteAsync().Result;
+
+    // MSAL owns the refresh token internally; persist its whole serialized cache
+    // rather than trying to extract the refresh token ourselves. Server.cshtml
+    // deserializes this back into a ConfidentialClientApplication and calls
+    // AcquireTokenSilent to transparently renew the access token per request.
+    var sessionId = Guid.NewGuid().ToString("N");
+    Azure.Set("sessions", sessionId, "session", new
+    {
+        TokenCache = Convert.ToBase64String(((ITokenCacheSerializer)app.UserTokenCache).SerializeMsalV3()),
+        HomeAccountId = result.Account.HomeAccountId.Identifier
+    });
+
+    Response.Cookies.Add(new HttpCookie("authToken", sessionId)
+    {
+        HttpOnly = true,
+        Secure = true,
+        Path = "/",
+        Expires = DateTime.UtcNow.AddDays(14)
+    });
+
+    Response.Redirect("/" + (returnQuery.Length > 0 ? "?" + returnQuery : ""));
+}

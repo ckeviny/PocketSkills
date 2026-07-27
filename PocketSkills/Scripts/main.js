@@ -1,8 +1,5 @@
 /// <reference path="azure.js" />
 
-// Client_ID = '4e173ffd-b9ca-470e-a71a-c01023427dc4'
-Client_ID = client_ID;
-
 // Make the local version super speed.
 if (sessionStorage && sessionStorage.debug) {
     azure.debug = true;
@@ -68,119 +65,30 @@ $(function main() {
         }
     });
 
-    const msalConfig = {
-        auth: {
-            clientId: Client_ID,
-            authority: `https://login.microsoftonline.com/common`,
-            redirectUri: 'https://' + window.location.hostname
-        },
-        cache: {
-            cacheLocation: 'localStorage',
-            storeAuthStateInCookie: true
-        }
-    }
+    // Auth now happens entirely server-side (AuthLogin/AuthCallback/AuthLogout) so
+    // the browser never talks to Microsoft directly - no more client-side MSAL,
+    // no more hidden iframe for silent renewal for Safari's ITP to block. The
+    // server tracks sign-in state via a first-party, HttpOnly session cookie
+    // that rides along automatically with same-origin requests.
 
-    const loginRequest = {
-        scopes: ['User.Read', 'Files.Read']
-    }
+    $('#windowsLiveSignIn, #testSignIn').click(() => {
+        window.location.href = '/AuthLogin' + location.search
+    })
 
-    const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-    msalSignIn();
+    $('#windowsLiveSignOut, #invitationSignOut').click(() => {
+        window.location.href = '/AuthLogout'
+    })
 
     /**
-     * Use MSAL to gather auth tokens
-     */
-    function msalSignIn() {
-        showLoad("Checking Sign-In Status...")
-
-        // handleRedirectPromise must run on every load (not just when there's no
-        // cached account) or a fresh loginRedirect() response never gets processed
-        // once an account is already active from a previous session - causing
-        // acquireTokenSilent to keep failing with no_tokens_found after re-login.
-        msalInstance.handleRedirectPromise()
-            .then((response) => {
-                if (response) {
-                    msalInstance.setActiveAccount(response.account)
-                }
-
-                const account = msalInstance.getActiveAccount()
-                console.log(`Active MSAL account:`, account)
-
-                if (account) {
-                    showLoad("Already Signed In")
-                    $('#mainLoginBlocker').hide()
-                    startApp();
-                } else {
-                    showLoad("Not Signed In.")
-                    showLoad("Showing Sign-In Screen...")
-                    $('#mainLoadingScreen').fadeOut('slow')
-                    // Wait for the user to tap Sign In instead of redirecting automatically.
-                }
-            })
-            .catch((error) => {
-                console.error("Silent sign-in failed:", error)
-                showLoad("Not Signed In.")
-                $('#mainLoadingScreen').fadeOut('slow')
-            })
-
-        $('#windowsLiveSignIn, #testSignIn').click(() => {
-            msalInstance.loginRedirect(loginRequest)
-        })
-
-        $('#windowsLiveSignOut, #invitationSignOut').click(() => {
-            msalInstance.logout({
-                postLogoutRedirectUri: window.location.origin
-            })
-        })
-    }
-
-    /**
-     * Retrieve access tokens for current active account
-     */
-    function getAccessTokens() {
-        return new Promise((resolve, reject) => {
-            const account = msalInstance.getActiveAccount();
-            if (!account) {
-                showLoad("No active account found.")
-                reject(new Error(`No active MSAL account`))
-            }
-
-            const tokenRequest = {
-                scopes: [`User.Read`, `Files.Read`],
-                account: account
-            }
-
-            msalInstance.acquireTokenSilent(tokenRequest)
-                .then(tokenResponse => resolve(tokenResponse.accessToken))
-                .catch(error => {
-                    // Safari's cross-site tracking prevention blocks the hidden iframe MSAL
-                    // uses for silent SSO, so this fails on every iOS load. Show the sign-in
-                    // screen and let the user tap Sign In to renew, instead of redirecting
-                    // automatically, which caused an infinite loop.
-                    console.error("Silent token acquisition failed", error);
-                    showLoad("Please sign in again.")
-                    $('#mainLoginError').text("Token renewal failed: " + (error.errorMessage || error.message || error))
-                    $('#mainLoadingScreen').fadeOut('slow')
-                    $('#mainLoginBlocker').show()
-                    reject(error)
-                })
-        })
-    }
-
-    /**
-     * Use AJAX to send request to url, using accessToken as auth
-     * @param {string} accessToken  - Access Token
+     * Use AJAX to send request to url. The server authenticates the request via
+     * the authToken session cookie, sent automatically since this is same-origin.
      * @param {string} url          - URL
-     * @param {callback} next       - Success callback 
+     * @param {callback} next       - Success callback
      * @param {callback} err        - Error callback
      */
-    function ajaxRequest(accessToken, url, next, err) {
+    function ajaxRequest(url, next, err) {
         $.ajax({
             url,
-            headers: {
-                Authorization: 'Bearer ' + accessToken
-            },
             dataType: 'json',
             success: next,
             error: function fail(jqxhr, textStatus, error) {
@@ -188,36 +96,42 @@ $(function main() {
 
                 // Retry once
                 $.ajax({
-                    url: requestUrl,
-                    headers: {
-                        Authorization: 'Bearer ' + accessToken
-                    },
+                    url,
                     dataType: 'json',
                     success: next,
-                    error: err 
+                    error: err
                 })
             }
         })
     }
 
     /**
-     * Use access token to send query to Server.cshtml to retrieve information
+     * Query Server.cshtml for the current session's data.
      */
     function startApp() {
-        getAccessTokens()
-            .then(accessToken => {
-                var query = location.href.split('?')[1] || '';
-                var requestUrl = 'Server.cshtml?' + query;
-                ajaxRequest(accessToken, requestUrl, start, (e) => console.trace(e));
-            })
+        var query = location.href.split('?')[1] || '';
+        var requestUrl = 'Server.cshtml?' + query;
+        ajaxRequest(requestUrl, start, (e) => console.trace(e));
     }
+
+    startApp();
 
     function start(server) {
         window.server = server;
         window.logTable = azure.getTable(server.SAS_logs);
 
         $('#mainInvitationStatus').empty();
-        if (server.error || !server.SAS_content) {
+        $('#mainLoginBlocker').hide();
+        if (server.error && !server.authenticated) {
+            // No valid session cookie - startApp() calls Server.cshtml unconditionally
+            // now (auth is decided server-side), so this is where "not signed in" shows
+            // up, in place of the old client-side MSAL account check.
+            showLoad("Showing Sign-In Screen... " + (server.error || ""));
+            $('#mainLoadingScreen').fadeOut('slow');
+
+            $('#mainLoginError').text(server.error);
+            $('#mainLoginBlocker').show();
+        } else if (server.error || !server.SAS_content) {
             showLoad("Showing Invitation Page... " + (server.error || ""));
             $('#mainLoadingScreen').fadeOut('slow');
 
@@ -287,9 +201,7 @@ $(function main() {
             $('#mainInvitationStatus').text("Checking code...");
             showLoad("Checking Code '" + code + "'...");
 
-            getAccessTokens().then(accessToken => {
-                ajaxRequest(accessToken, `Server.cshtml?i=${code}`, start, (e) => console.trace(e))
-            })
+            ajaxRequest(`Server.cshtml?i=${code}`, start, (e) => console.trace(e))
             $(':focus').blur();
         }
 
