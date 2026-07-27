@@ -1,6 +1,5 @@
 using System;
 using System.Web;
-using System.Web.Configuration;
 using Microsoft.Identity.Client;
 
 public static class Auth
@@ -19,14 +18,13 @@ public static class Auth
 
     /// <summary>
     /// Builds the confidential client used for the server-side OAuth code exchange and
-    /// silent token refresh. Reuses the same app registration/secret as the Key Vault
-    /// service principal in Azure.cs.
+    /// silent token refresh.
     /// </summary>
     public static IConfidentialClientApplication BuildApp(HttpRequestBase request)
     {
         return ConfidentialClientApplicationBuilder
             .Create(Environment.GetEnvironmentVariable("Client_ID"))
-            .WithClientSecret(WebConfigurationManager.ConnectionStrings["ClientSecret"].ConnectionString)
+            .WithClientSecret(Environment.GetEnvironmentVariable("Client_Secret"))
             .WithAuthority("https://login.microsoftonline.com/common")
             .WithRedirectUri(GetRedirectUri(request))
             .Build();
